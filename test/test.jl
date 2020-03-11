@@ -195,3 +195,21 @@ end
     event = kernel_empty(CPU(), 1)(ndrange=1, dependencies=(event))
     wait(event)
 end
+
+@testset "fallback test: callable types" begin
+    function f end
+    @kernel function (a::typeof(f))(x, ::Val{m}) where m
+        I = @index(Global)
+        @inbounds x[I] = m
+    end
+    x = [1,2,3]
+    env = f(CPU())(x, Val(4); ndrange=length(x))
+    wait(env)
+    @test x == [4,4,4]
+end
+
+@testset "CPU dependencies" begin
+    event = Event(CPU())
+    event = kernel_empty(CPU(), 1)(ndrange=1, dependencies=(event))
+    wait(event)
+end
